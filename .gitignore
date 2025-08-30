@@ -4,6 +4,7 @@ gpt_oss_20b_outputs/
 unsloth_training_checkpoints/
 unsloth_compiled_cache/
 mistral_7b_outputs/
+phi_3_5_mini_outputs/
 smollm2_1_7b_outputs/
 tinyllama_chat_outputs/
 zephyr_sft_outputs/
