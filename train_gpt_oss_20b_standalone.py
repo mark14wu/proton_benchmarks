@@ -5,6 +5,8 @@ This script demonstrates fine-tuning GPT-OSS-20B with LoRA adapters
 """
 
 import os
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import time
 import argparse
 import torch
@@ -15,8 +17,6 @@ from unsloth.chat_templates import get_chat_template, standardize_sharegpt, trai
 from trl import SFTTrainer, SFTConfig
 import triton.profiler as proton
 
-
-os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
 
 def prepare_dataset(tokenizer, num_samples=1000):
     print("Loading FineTome-100k dataset...")
