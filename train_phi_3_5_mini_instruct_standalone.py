@@ -10,6 +10,7 @@ import argparse
 import torch
 import pandas as pd
 from datasets import load_dataset, Dataset
+os.environ["UNSLOTH_COMPILE_DISABLE"] = "1"
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template, standardize_sharegpt, train_on_responses_only
 from trl import SFTTrainer, SFTConfig
