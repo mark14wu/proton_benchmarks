@@ -9,7 +9,7 @@ import time
 import argparse
 import torch
 import pandas as pd
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, Value
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template, standardize_data_formats, train_on_responses_only
 from trl import SFTTrainer, SFTConfig
@@ -20,24 +20,44 @@ def prepare_dataset(tokenizer, num_samples=1000):
     print("Loading FineTome-100k dataset...")
     dataset = load_dataset("mlabonne/FineTome-100k", split="train")
 
-    # 1) Standardize data formats (ShareGPT -> role/content)
+    # 1) Standardize to role/content structure
     dataset = standardize_data_formats(dataset)
 
-    # 2) Set Qwen3 chat template (using gemma-3 template as shown in qwen3/training.py)
+    # 2) Use Qwen3 expected template (gemma-3)
     tokenizer = get_chat_template(tokenizer, chat_template="gemma-3")
 
-    # 3) Apply template to each conversation
+    # 3) Compatible column names: some have "messages", some have "conversations" after standardization
+    col = "conversations" if "conversations" in dataset.column_names else (
+          "messages" if "messages" in dataset.column_names else None)
+    if col is None:
+        raise KeyError(f"Expected 'conversations' or 'messages' in dataset columns, got {dataset.column_names}")
+
+    # 4) Generate string format training text (explicit tokenize=False)
     def apply_chat_template_func(examples):
-        texts = tokenizer.apply_chat_template(examples["conversations"])
+        convs = examples[col]            # list[list[{"role","content"}]]
+        texts = [
+            tokenizer.apply_chat_template(
+                c,
+                tokenize=False,              # Key: ensure returning string not input_ids
+                add_generation_prompt=False  # Training SFT generally doesn't add inference prompt
+            )
+            for c in convs
+        ]
         return {"text": texts}
 
     dataset = dataset.map(
         apply_chat_template_func,
         batched=True,
-        remove_columns=dataset.column_names,  # Keep only text column
+        remove_columns=dataset.column_names
     )
 
-    # 4) Truncate to the number of samples needed
+    # 5) Filter non-string/blank samples to avoid tokenizer receiving None or ""
+    dataset = dataset.filter(lambda x: isinstance(x["text"], str) and len(x["text"].strip()) > 0)
+
+    # 6) Explicitly declare column type as string (optional but more stable)
+    dataset = dataset.cast_column("text", Value("string"))
+
+    # 7) Truncate samples
     dataset = dataset.select(range(min(num_samples, len(dataset))))
 
     print(f"Dataset prepared with {len(dataset)} samples")
