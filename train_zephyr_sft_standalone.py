@@ -50,6 +50,8 @@ def prepare_dataset(tokenizer, num_samples=1000):
     return dataset, tokenizer
 
 
+
+
 def initialize_model():
     """
     Initialize Zephyr-7B-SFT model with LoRA adapters
@@ -149,10 +151,11 @@ def create_trainer(model, tokenizer, train_dataset):
     )
     
     # Apply response-only training for Zephyr format
+    # Note: response_part needs newline prefix for proper token-level matching
     trainer = train_on_responses_only(
         trainer,
-        instruction_part="<|user|>",
-        response_part="<|assistant|>",
+        instruction_part="<|user|>\n",
+        response_part="\n<|assistant|>\n",
     )
     
     return trainer

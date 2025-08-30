@@ -149,10 +149,11 @@ def create_trainer(model, tokenizer, train_dataset):
     )
     
     # Apply response-only training for TinyLlama format (using zephyr/chatml format)
+    # Note: response_part needs newline prefix for proper token-level matching
     trainer = train_on_responses_only(
         trainer,
-        instruction_part="<|user|>",
-        response_part="<|assistant|>",
+        instruction_part="<|user|>\n",
+        response_part="\n<|assistant|>\n",
     )
     
     return trainer
