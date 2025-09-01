@@ -146,18 +146,25 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="llama3_1_8b
         trainer: The SFTTrainer instance
         profiling_mode: One of "none", "proton", or "torch"
         model_name: Name for profiling output files
+    
+    Returns:
+        float: Training loop execution time in seconds
     """
     print(f"\n{'='*50}")
     print(f"Starting training with profiling mode: {profiling_mode}")
     print(f"{'='*50}\n")
     
-    start_time = time.time()
-    print(f"START_PROFILE: {start_time}")
-    
     if profiling_mode == "proton":
         # Use Triton Proton profiler
         session_id = proton.start(name=f"llama3_1_8b_{model_name}", context="shadow")
+        
+        # Measure only the training loop time
+        start_time = time.time()
+        print(f"START_TRAINING_LOOP: {start_time}")
         trainer.train()
+        end_time = time.time()
+        print(f"END_TRAINING_LOOP: {end_time}")
+        
         proton.finalize(session_id)
         print(f"Proton profile saved as llama3_1_8b_{model_name}.hatchet")
         
@@ -166,7 +173,12 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="llama3_1_8b
         with torch.profiler.profile(
             activities=[torch.profiler.ProfilerActivity.CUDA]
         ) as prof:
+            # Measure only the training loop time
+            start_time = time.time()
+            print(f"START_TRAINING_LOOP: {start_time}")
             trainer.train()
+            end_time = time.time()
+            print(f"END_TRAINING_LOOP: {end_time}")
         
         trace_file = f"llama3_1_8b_trace_{model_name}.json"
         prof.export_chrome_trace(trace_file)
@@ -174,11 +186,17 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="llama3_1_8b
         
     else:
         # Standard training without profiling
+        # Measure only the training loop time
+        start_time = time.time()
+        print(f"START_TRAINING_LOOP: {start_time}")
         trainer.train()
+        end_time = time.time()
+        print(f"END_TRAINING_LOOP: {end_time}")
     
-    end_time = time.time()
-    print(f"END_PROFILE: {end_time}")
-    print(f"\nTraining completed in {end_time - start_time:.2f} seconds")
+    training_time = end_time - start_time
+    print(f"\nTraining loop completed in {training_time:.2f} seconds")
+    return training_time
+
 
 
 def main():
