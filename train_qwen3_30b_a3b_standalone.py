@@ -172,13 +172,17 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="qwen3_30b_a
     print(f"Starting training with profiling mode: {profiling_mode}")
     print(f"{'='*50}\n")
     
-    start_time = time.time()
-    print(f"START_PROFILE: {start_time}")
-    
     if profiling_mode == "proton":
         # Use Triton Proton profiler
         session_id = proton.start(name=f"qwen3_30b_a3b_{model_name}", context="shadow")
+
+        # Measure only the training loop time
+        start_time = time.time()
+        print(f"START_TRAINING_LOOP: {start_time}")
         trainer.train()
+        end_time = time.time()
+        print(f"END_TRAINING_LOOP: {end_time}")
+        print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
         proton.finalize(session_id)
         print(f"Proton profile saved as qwen3_30b_a3b_{model_name}.hatchet")
         
@@ -187,7 +191,13 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="qwen3_30b_a
         with torch.profiler.profile(
             activities=[torch.profiler.ProfilerActivity.CUDA]
         ) as prof:
+            # Measure only the training loop time
+            start_time = time.time()
+            print(f"START_TRAINING_LOOP: {start_time}")
             trainer.train()
+            end_time = time.time()
+            print(f"END_TRAINING_LOOP: {end_time}")
+            print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
         
         trace_file = f"qwen3_30b_a3b_trace_{model_name}.json"
         prof.export_chrome_trace(trace_file)
@@ -195,11 +205,13 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="qwen3_30b_a
         
     else:
         # Standard training without profiling
+        # Measure only the training loop time
+        start_time = time.time()
+        print(f"START_TRAINING_LOOP: {start_time}")
         trainer.train()
-    
-    end_time = time.time()
-    print(f"END_PROFILE: {end_time}")
-    print(f"\nTraining completed in {end_time - start_time:.2f} seconds")
+        end_time = time.time()
+        print(f"END_TRAINING_LOOP: {end_time}")
+        print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
 
 
 def main():

@@ -177,13 +177,17 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="tinyllama_c
         print(f"GPU memory allocated before training: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
         print(f"GPU memory reserved before training: {torch.cuda.memory_reserved()/1024**3:.2f} GB")
     
-    start_time = time.time()
-    print(f"START_PROFILE: {start_time}")
-    
     if profiling_mode == "proton":
         # Use Triton Proton profiler
         session_id = proton.start(name=f"tinyllama_{model_name}", context="shadow")
+
+        # Measure only the training loop time
+        start_time = time.time()
+        print(f"START_TRAINING_LOOP: {start_time}")
         trainer.train()
+        end_time = time.time()
+        print(f"END_TRAINING_LOOP: {end_time}")
+        print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
         proton.finalize(session_id)
         print(f"Proton profile saved as tinyllama_{model_name}.hatchet")
         
@@ -197,7 +201,13 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="tinyllama_c
             profile_memory=True,
             record_shapes=True
         ) as prof:
+            # Measure only the training loop time
+            start_time = time.time()
+            print(f"START_TRAINING_LOOP: {start_time}")
             trainer.train()
+            end_time = time.time()
+            print(f"END_TRAINING_LOOP: {end_time}")
+            print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
         
         trace_file = f"tinyllama_trace_{model_name}.json"
         prof.export_chrome_trace(trace_file)
@@ -209,11 +219,14 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="tinyllama_c
         
     else:
         # Standard training without profiling
+        # Measure only the training loop time
+        start_time = time.time()
+        print(f"START_TRAINING_LOOP: {start_time}")
         trainer.train()
+        end_time = time.time()
+        print(f"END_TRAINING_LOOP: {end_time}")
+        print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
     
-    end_time = time.time()
-    print(f"END_PROFILE: {end_time}")
-    print(f"\nTraining completed in {end_time - start_time:.2f} seconds")
     
     # Memory usage after training
     if torch.cuda.is_available():

@@ -164,6 +164,7 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="llama3_1_8b
         trainer.train()
         end_time = time.time()
         print(f"END_TRAINING_LOOP: {end_time}")
+        print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
         
         proton.finalize(session_id)
         print(f"Proton profile saved as llama3_1_8b_{model_name}.hatchet")
@@ -179,6 +180,7 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="llama3_1_8b
             trainer.train()
             end_time = time.time()
             print(f"END_TRAINING_LOOP: {end_time}")
+            print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
         
         trace_file = f"llama3_1_8b_trace_{model_name}.json"
         prof.export_chrome_trace(trace_file)
@@ -192,10 +194,7 @@ def train_with_profiling(trainer, profiling_mode="none", model_name="llama3_1_8b
         trainer.train()
         end_time = time.time()
         print(f"END_TRAINING_LOOP: {end_time}")
-    
-    training_time = end_time - start_time
-    print(f"\nTraining loop completed in {training_time:.2f} seconds")
-    return training_time
+        print(f"\nTraining loop completed in {end_time - start_time:.2f} seconds")
 
 
 

@@ -8,3 +8,5 @@ phi_3_5_mini_outputs/
 smollm2_1_7b_outputs/
 tinyllama_chat_outputs/
 zephyr_sft_outputs/
+*.json
+*.hatchet
